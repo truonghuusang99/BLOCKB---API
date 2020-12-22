@@ -6,9 +6,8 @@ module.exports.queryDataElevator = function () {
       const elevator = {
         type: "FeatureCollection",
         generator: "overpass-ide",
-        copyright:
-          "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-        timestamp: "2020-08-27T10:45:03Z",
+        copyright: "Gi Cung Duoc Group",
+        timestamp: new Date(),
         features: [],
       };
       await db.mongo.connect();

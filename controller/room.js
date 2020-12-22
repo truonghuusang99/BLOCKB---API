@@ -6,9 +6,8 @@ module.exports.queryDataRoom = function (res) {
       const room = {
         type: "FeatureCollection",
         generator: "overpass-ide",
-        copyright:
-          "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-        timestamp: "2020-08-27T10:45:03Z",
+        copyright: "Gi Cung Duoc Group",
+        timestamp: new Date(),
         features: [],
       };
 
@@ -70,5 +69,48 @@ module.exports.createRoomNode = async function (id_face, locationArr) {
     console.log(create);
   } catch (error) {
     throw error;
+  }
+};
+
+module.exports.createRoom = async function (room) {
+  try {
+    let arrRoom = [];
+    const database = await db.mongo.db("block_b");
+    for (let i = 0; i < room.length; i++) {
+      const create = await database
+        .collection("BODY")
+        .insertOne(room[i].properties);
+
+      const createFace = await database
+        .collection("FACE")
+        .insertOne({ id_body: create.insertedId.toString() });
+      console.log(createFace.insertedId);
+      this.createRoomNode(
+        createFace.insertedId.toString(),
+        room[i].geometry.coordinates[0]
+      );
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports.deleteRoom = async function (id_body) {
+  try {
+    const database = await db.mongo.db("block_b");
+
+    const face = await database
+      .collection("FACE")
+      .findOne({ id_body: id_body.toString() });
+
+    await database
+      .collection("NODE")
+      .deleteMany({ id_face: face._id.toString() });
+    await database
+      .collection("FACE")
+      .deleteOne({ id_body: id_body.toString() });
+    await database.collection("BODY").deleteOne({ _id: ObjectId(id_body) });
+  } catch (err) {
+    throw err;
   }
 };

@@ -6,9 +6,8 @@ module.exports.queryDataStair = function () {
       const stair = {
         type: "FeatureCollection",
         generator: "overpass-ide",
-        copyright:
-          "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
-        timestamp: "2020-08-27T10:45:03Z",
+        copyright: "Gi Cung Duoc Group",
+        timestamp: new Date(),
         features: [],
       };
       await db.mongo.connect();
@@ -20,7 +19,6 @@ module.exports.queryDataStair = function () {
         .find({ "graphic:type": { $eq: "stair" } })
         .toArray();
 
-      console.log(stair);
       for (let i = 0; i < _STAIR_PROP.length; i++) {
         _STAIR_PROP[i]["_id"].toString();
         let feature = {
@@ -46,38 +44,105 @@ module.exports.queryDataStair = function () {
         feature["geometry"]["coordinates"].push(geometries);
         stair["features"].push(feature);
       }
-      //   const face = {
-      //     0: "5fd72090a41ba720d866a7dd",
-      //     1: " 5fd72090a41ba720d866a7de",
-      //     2: "5fd72090a41ba720d866a7df",
-      //     3: "5fd72090a41ba720d866a7e0",
-      //   };
-
-      //     const location = [
-      //       [106.80393830626085, 10.870007597266962, 27],
-      //         [106.80395431816578, 10.870028352048328, 27],
-      //         [106.80393118411301, 10.870046790632017, 27],
-      //         [106.80392020135069, 10.870023401768139, 27],
-      //         [106.80393830626085, 10.870007597266962, 27]
-      //       ]
-      //     const createVal = [];
-
-      //     for (let i = 0; i < location.length; i++) {
-      //       createVal.push({
-      //         index: i,
-      //         id_face: "5fd72090a41ba720d866a7de",
-      //         geometry: location[i],
-      //       });
-      //     }
-
-      //     console.log(createVal);
-
-      //   const create = await database.collection("NODE").insertMany(createVal);
-      //   console.log(create);
       resolve(stair);
     } catch (err) {
       resolve({ error: err });
       throw err;
     }
   });
+};
+
+module.exports.queryDataFrontStair = function (height) {
+  return new Promise(async (resolve, rejects) => {
+    try {
+      const frontStair = {
+        type: "FeatureCollection",
+        generator: "overpass-ide",
+        copyright: "Gi Cung Duoc Group",
+        timestamp: new Date(),
+        features: [],
+      };
+      await db.mongo.connect();
+
+      const database = await db.mongo.db("block_b");
+
+      const _STAIR_PROP = await database.collection("BODY").findOne({
+        "graphic:type": { $eq: "front-stair" },
+        "graphic:height": { $eq: height },
+      });
+      _STAIR_PROP["_id"].toString();
+      let faceStair = await database
+        .collection("FACE")
+        .find({ id_body: _STAIR_PROP._id.toString() })
+        .toArray();
+
+      for (let i = 0; i < faceStair.length; i++) {
+        let feature = {
+          type: "Feature",
+          properties: _STAIR_PROP,
+          geometry: {
+            type: "Polygon",
+            coordinates: [],
+          },
+        };
+
+        // tìm tọa độ
+        let geometries = await (
+          await database
+            .collection("NODE")
+            .find({ id_face: faceStair[i]._id.toString() })
+            .sort(["index"], 1)
+            .toArray()
+        ).map((item) => item.geometry);
+
+        feature["geometry"]["coordinates"].push(geometries);
+        frontStair["features"].push(feature);
+      }
+      resolve(frontStair);
+    } catch (err) {
+      resolve({ error: err });
+      throw err;
+    }
+  });
+};
+
+module.exports.createDataStair = function (arr, properties) {
+  return new Promise(async (resolve, rejects) => {
+    await db.mongo.connect();
+    console.log(properties);
+    const database = await db.mongo.db("block_b");
+    const create = await database.collection("BODY").insertOne(properties);
+
+    for (let i = 0; i < arr.length; i++) {
+      const createFace = await database
+        .collection("FACE")
+        .insertOne({ id_body: create.insertedId.toString() });
+      console.log(createFace.insertedId);
+      this.createStairNode(
+        createFace.insertedId.toString(),
+        arr[i].geometry.coordinates[0]
+      );
+    }
+
+    resolve("Success");
+  });
+};
+
+module.exports.createStairNode = async function (id_face, locationArr) {
+  try {
+    let arrayCreate = [];
+    for (let i = 0; i < locationArr.length; i++) {
+      arrayCreate.push({
+        id_face,
+        index: i,
+        geometry: locationArr[i],
+      });
+    }
+
+    const database = await db.mongo.db("block_b");
+    const create = await database.collection("NODE").insertMany(arrayCreate);
+    console.log(create);
+  } catch (error) {
+    throw error;
+  }
 };
