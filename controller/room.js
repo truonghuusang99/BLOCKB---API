@@ -66,7 +66,7 @@ module.exports.createRoomNode = async function (id_face, locationArr) {
 
     const database = await db.mongo.db("block_b");
     const create = await database.collection("NODE").insertMany(arrayCreate);
-    console.log(create);
+ 
   } catch (error) {
     throw error;
   }
@@ -84,7 +84,6 @@ module.exports.createRoom = async function (room) {
       const createFace = await database
         .collection("FACE")
         .insertOne({ id_body: create.insertedId.toString() });
-      console.log(createFace.insertedId);
       this.createRoomNode(
         createFace.insertedId.toString(),
         room[i].geometry.coordinates[0]

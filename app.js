@@ -49,14 +49,48 @@ app.get("/wall-line-roof", cors(), (req, res) => {
 });
 
 app.get("/window-wc", cors(), (req, res) => {
-  windowController.queryDataWindow(0.5).then((result) => res.send(result));
+  windowController
+    .queryDataWindow("window", 0.5)
+    .then((result) => res.send(result));
 });
+app.get("/window-room01", cors(), (req, res) => {
+  windowController
+    .queryDataWindow("window", 3)
+    .then((result) => res.send(result));
+});
+app.get("/window-room", cors(), (req, res) => {
+  windowController
+    .queryDataWindow("window", 7)
+    .then((result) => res.send(result));
+});
+app.get("/window-line", cors(), (req, res) => {
+  windowController
+    .queryDataWindowLine("window-line")
+    .then((result) => res.send(result));
+});
+app.get("/window-sub-wc", cors(), (req, res) => {
+  windowController
+    .queryDataWindow("window", 1.5)
+    .then((result) => res.send(result));
+});
+app.get("/window-stair", cors(), (req, res) => {
+  windowController
+    .queryDataWindow("window-stair")
+    .then((result) => res.send(result));
+});
+app.get("/window-stair-line", cors(), (req, res) => {
+  windowController
+    .queryDataWindowStairLine()
+    .then((result) => res.send(result));
+});
+
 app.get("/door-roof", cors(), (req, res) => {
   doorController.queryDataDoor(7).then((result) => res.send(result));
 });
-
-app.get("/create", cors(), (req, res) => {
-  
+app.get("/door-roof-line", cors(), (req, res) => {
+  windowController
+    .queryDataWindowLine("door-line")
+    .then((result) => res.send(result));
 });
 
 app.listen(port, () => {

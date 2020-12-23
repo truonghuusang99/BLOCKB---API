@@ -105,7 +105,6 @@ module.exports.queryDataWall = function () {
 module.exports.createDataWall = function (arr, properties) {
   return new Promise(async (resolve, rejects) => {
     await db.mongo.connect();
-    console.log(properties);
     const database = await db.mongo.db("block_b");
     const create = await database.collection("SURFACE").insertOne(properties);
 
@@ -113,7 +112,6 @@ module.exports.createDataWall = function (arr, properties) {
       const createFace = await database
         .collection("FACE")
         .insertOne({ id_surface: create.insertedId.toString() });
-      console.log(createFace.insertedId);
       this.createWallNode(createFace.insertedId.toString(), arr[i]);
     }
 
@@ -134,7 +132,6 @@ module.exports.createWallNode = async function (id_face, locationArr) {
 
     const database = await db.mongo.db("block_b");
     const create = await database.collection("NODE").insertMany(arrayCreate);
-    console.log(create);
   } catch (error) {
     throw error;
   }

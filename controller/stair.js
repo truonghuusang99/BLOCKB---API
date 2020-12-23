@@ -109,7 +109,6 @@ module.exports.queryDataFrontStair = function (height) {
 module.exports.createDataStair = function (arr, properties) {
   return new Promise(async (resolve, rejects) => {
     await db.mongo.connect();
-    console.log(properties);
     const database = await db.mongo.db("block_b");
     const create = await database.collection("BODY").insertOne(properties);
 
@@ -117,7 +116,6 @@ module.exports.createDataStair = function (arr, properties) {
       const createFace = await database
         .collection("FACE")
         .insertOne({ id_body: create.insertedId.toString() });
-      console.log(createFace.insertedId);
       this.createStairNode(
         createFace.insertedId.toString(),
         arr[i].geometry.coordinates[0]
@@ -141,7 +139,6 @@ module.exports.createStairNode = async function (id_face, locationArr) {
 
     const database = await db.mongo.db("block_b");
     const create = await database.collection("NODE").insertMany(arrayCreate);
-    console.log(create);
   } catch (error) {
     throw error;
   }
