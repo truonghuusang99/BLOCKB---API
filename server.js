@@ -13,81 +13,81 @@ const elevatorController = require("./controller/elevator");
 const wallController = require("./controller/wall");
 const doorController = require("./controller/door");
 
-app.get("/", (req, res) => {
+app.get("/api/", (req, res) => {
   res.send("CHAO MUNG DEN VOI BLOCK B");
 });
-app.get("/floor", cors(), (req, res) => {
+app.get("/api/floor", cors(), (req, res) => {
   floorController.queryDataFloor(res).then((result) => res.send(result));
 });
-app.get("/room", cors(), (req, res) => {
+app.get("/api/room", cors(), (req, res) => {
   roomController.queryDataRoom(res).then((result) => res.send(result));
 });
-app.get("/stair", cors(), (req, res) => {
+app.get("/api/stair", cors(), (req, res) => {
   stairController.queryDataStair().then((result) => res.send(result));
 });
-app.get("/front-stair-small", cors(), (req, res) => {
+app.get("/api/front-stair-small", cors(), (req, res) => {
   stairController
     .queryDataFrontStair("small")
     .then((result) => res.send(result));
 });
-app.get("/front-stair-medium", cors(), (req, res) => {
+app.get("/api/front-stair-medium", cors(), (req, res) => {
   stairController
     .queryDataFrontStair("medium")
     .then((result) => res.send(result));
 });
-app.get("/elevator", cors(), (req, res) => {
+app.get("/api/elevator", cors(), (req, res) => {
   elevatorController.queryDataElevator().then((result) => res.send(result));
 });
-app.get("/wall", cors(), (req, res) => {
+app.get("/api/wall", cors(), (req, res) => {
   wallController.queryDataWall().then((result) => res.send(result));
 });
-app.get("/wall-line", cors(), (req, res) => {
+app.get("/api/wall-line", cors(), (req, res) => {
   wallController.queryDataWallLine(3).then((result) => res.send(result));
 });
-app.get("/wall-line-roof", cors(), (req, res) => {
+app.get("/api/wall-line-roof", cors(), (req, res) => {
   wallController.queryDataWallLine(2).then((result) => res.send(result));
 });
 
-app.get("/window-wc", cors(), (req, res) => {
+app.get("/api/window-wc", cors(), (req, res) => {
   windowController
     .queryDataWindow("window", 0.5)
     .then((result) => res.send(result));
 });
-app.get("/window-room01", cors(), (req, res) => {
+app.get("/api/window-room01", cors(), (req, res) => {
   windowController
     .queryDataWindow("window", 3)
     .then((result) => res.send(result));
 });
-app.get("/window-room", cors(), (req, res) => {
+app.get("/api/window-room", cors(), (req, res) => {
   windowController
     .queryDataWindow("window", 7)
     .then((result) => res.send(result));
 });
-app.get("/window-line", cors(), (req, res) => {
+app.get("/api/window-line", cors(), (req, res) => {
   windowController
     .queryDataWindowLine("window-line")
     .then((result) => res.send(result));
 });
-app.get("/window-sub-wc", cors(), (req, res) => {
+app.get("/api/window-sub-wc", cors(), (req, res) => {
   windowController
     .queryDataWindow("window", 1.5)
     .then((result) => res.send(result));
 });
-app.get("/window-stair", cors(), (req, res) => {
+app.get("/api/window-stair", cors(), (req, res) => {
   windowController
     .queryDataWindow("window-stair")
     .then((result) => res.send(result));
 });
-app.get("/window-stair-line", cors(), (req, res) => {
+app.get("/api/window-stair-line", cors(), (req, res) => {
   windowController
     .queryDataWindowStairLine()
     .then((result) => res.send(result));
 });
 
-app.get("/door-roof", cors(), (req, res) => {
+app.get("/api/door-roof", cors(), (req, res) => {
   doorController.queryDataDoor(7).then((result) => res.send(result));
 });
-app.get("/door-roof-line", cors(), (req, res) => {
+app.get("/api/door-roof-line", cors(), (req, res) => {
   windowController
     .queryDataWindowLine("door-line")
     .then((result) => res.send(result));
