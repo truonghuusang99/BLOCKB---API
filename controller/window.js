@@ -51,7 +51,7 @@ module.exports.queryDataWindow = function (type, height = null) {
               .sort(["index"], 1)
               .toArray()
           ).map((item) => item.geometry);
-          console.log(geometries);
+         
           feature["geometry"]["coordinates"].push(geometries);
         }
         Window["features"].push(feature);
@@ -116,7 +116,7 @@ module.exports.queryDataWindowLine = function (type, height = null) {
               .sort(["index"], 1)
               .toArray()
           ).map((item) => item.geometry);
-          console.log(geometries);
+        
           feature["geometry"]["coordinates"] = geometries;
         }
         Window["features"].push(feature);
@@ -224,7 +224,7 @@ module.exports.createWindowNode = async function (id_face, locationArr) {
 
     const database = await db.mongo.db("block_b");
     const create = await database.collection("NODE").insertMany(arrayCreate);
-    console.log(create);
+
   } catch (error) {
     throw error;
   }
