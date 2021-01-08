@@ -13,8 +13,8 @@ const elevatorController = require("./controller/elevator");
 const wallController = require("./controller/wall");
 const doorController = require("./controller/door");
 
-app.get("/api/", (req, res) => {
-  res.send("CHAO MUNG DEN VOI BLOCK B");
+app.get("/api", (req, res) => {
+  res.send("<h1>CHÀO MỪNG BẠN ĐẾN VỚI TÒA NHÀ B UIT</h1> <a href='https://ibb.co/4S3cWpB'><img src='https://i.ibb.co/M1Qbn7q/back.png' alt='back' border='0'></a><a href='https://ibb.co/Lxy3tzs'><img src='https://i.ibb.co/m9K3qCP/front.png' alt='front' border='0'></a>");
 });
 app.get("/api/floor", cors(), (req, res) => {
   floorController.queryDataFloor(res).then((result) => res.send(result));
