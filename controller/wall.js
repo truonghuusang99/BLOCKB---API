@@ -2,47 +2,53 @@ const db = require("../database/config");
 module.exports.queryDataWallLine = function (height) {
   return new Promise(async (resolve, rejects) => {
     try {
-      const wallLine = {
+      const floor = {
         type: "FeatureCollection",
-        generator: "overpass-ide",
         copyright: "Gi Cung Duoc Group",
         timestamp: new Date(),
-        features: [
-          {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "MultiLineString",
-              coordinates: [],
-            },
-          },
-        ],
+        features: [],
       };
-      await db.mongo.connect();
 
+      await db.mongo.connect();
       const database = await db.mongo.db("block_b");
 
-      const _WALL_PROP = await database.collection("SURFACE").findOne({
-        "graphic:type": { $eq: "wall-line" },
-        "graphic:height": { $eq: height },
-      });
-      let faceWall = await database
-        .collection("FACE")
-        .find({ id_surface: _WALL_PROP._id.toString() })
+      const _STAIR_PROP = await database
+        .collection("SURFACE")
+        .find({
+          "graphic:type": { $eq: "wall-line" },
+          "graphic:height": { $eq: height },
+        })
         .toArray();
-      for (let i = 0; i < faceWall.length; i++) {
-        let geometries = await (
-          await database
-            .collection("NODE")
-            .find({ id_face: faceWall[i]._id.toString() })
-            .sort(["index"], 1)
-            .toArray()
-        ).map((item) => item.geometry);
+      for (let i = 0; i < _STAIR_PROP.length; i++) {
+        _STAIR_PROP[i]["_id"].toString();
+        let faceFloor = await database
+          .collection("FACE")
+          .find({ id_surface: _STAIR_PROP[i]._id.toString() }).toArray();
 
-        wallLine["features"][0]["geometry"]["coordinates"].push(geometries);
+        let feature = {
+          type: "Feature",
+          properties: _STAIR_PROP[i],
+          geometry: {
+            type: faceFloor.length > 1 ? "MultiLineString" : "LineString",
+            coordinates: [],
+          },
+        };
+        for (let face of faceFloor) {
+          // tìm tọa độ
+          let geometries = await (
+            await database
+              .collection("NODE")
+              .find({ id_face: face._id.toString() })
+              .sort(["index"], 1)
+              .toArray()
+          ).map((item) => {
+            return [item.x, item.y, item.z]
+          });
+          feature["geometry"]["coordinates"].push(geometries);
+        }
+        floor["features"].push(feature);
       }
-      wallLine["features"][0]["properties"] = _WALL_PROP;
-      resolve(wallLine);
+      resolve(floor);
     } catch (err) {
       resolve({ error: err });
       throw err;
@@ -52,87 +58,93 @@ module.exports.queryDataWallLine = function (height) {
 module.exports.queryDataWall = function () {
   return new Promise(async (resolve, rejects) => {
     try {
-      const frontWall = {
+      const floor = {
         type: "FeatureCollection",
-        generator: "overpass-ide",
         copyright: "Gi Cung Duoc Group",
         timestamp: new Date(),
-        features: [
-          {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "MultiLineString",
-              coordinates: [],
-            },
-          },
-        ],
+        features: [],
       };
-      await db.mongo.connect();
 
+      await db.mongo.connect();
       const database = await db.mongo.db("block_b");
 
-      const _WALL_PROP = await database.collection("SURFACE").findOne({
-        "graphic:type": { $eq: "wall" },
-      });
-
-      _WALL_PROP["_id"].toString();
-      let faceWall = await database
-        .collection("FACE")
-        .find({ id_surface: _WALL_PROP._id.toString() })
+      const _STAIR_PROP = await database
+        .collection("SURFACE")
+        .find({ "graphic:type": { $eq: "wall" } })
         .toArray();
+      for (let i = 0; i < _STAIR_PROP.length; i++) {
+        _STAIR_PROP[i]["_id"].toString();
+        let faceFloor = await database
+          .collection("FACE")
+          .find({ id_surface: _STAIR_PROP[i]._id.toString() }).toArray();
 
-      for (let i = 0; i < faceWall.length; i++) {
-        // tìm tọa độ
-        let geometries = await (
-          await database
-            .collection("NODE")
-            .find({ id_face: faceWall[i]._id.toString() })
-            .sort(["index"], 1)
-            .toArray()
-        ).map((item) => item.geometry);
-
-        frontWall["features"][0]["geometry"]["coordinates"].push(geometries);
+        let feature = {
+          type: "Feature",
+          properties: _STAIR_PROP[i],
+          geometry: {
+            type: faceFloor.length > 1 ? "MultiLineString" : "LineString",
+            coordinates: [],
+          },
+        };
+        for (let face of faceFloor) {
+          // tìm tọa độ
+          let geometries = await (
+            await database
+              .collection("NODE")
+              .find({ id_face: face._id.toString() })
+              .sort(["index"], 1)
+              .toArray()
+          ).map((item) => {
+            return [item.x, item.y, item.z]
+          });
+          feature["geometry"]["coordinates"].push(geometries);
+        }
+        floor["features"].push(feature);
       }
-      frontWall["features"][0]["properties"] = _WALL_PROP;
-      resolve(frontWall);
+      resolve(floor);
     } catch (err) {
       resolve({ error: err });
       throw err;
     }
   });
 };
-module.exports.createDataWall = function (arr, properties) {
+module.exports.createWall = function (properties, geometry) {
   return new Promise(async (resolve, rejects) => {
-    await db.mongo.connect();
-    const database = await db.mongo.db("block_b");
-    const create = await database.collection("SURFACE").insertOne(properties);
+    try {
+      await db.mongo.connect();
+      const database = await db.mongo.db("block_b");
 
-    for (let i = 0; i < arr.length; i++) {
-      const createFace = await database
+      // create body 
+      const body = await database.collection("SURFACE").insertOne(properties)
+
+      for (let i in geometry) {
+        let face = await database.collection("FACE").insertOne({ id_surface: body.insertedId.toString() })
+
+        let geo = geometry[i].map((item, index) => { return { x: item[0], y: item[1], z: item[2], index, id_face: face.insertedId.toString() } })
+        await database.collection("NODE").insertMany(geo)
+      }
+      resolve({ id_surface: body.insertedId })
+    } catch (err) {
+      resolve(err)
+    }
+  })
+}
+module.exports.deleteWall = function (id_surface) {
+  return new Promise(async (resolve, rejects) => {
+    try {
+      await db.mongo.connect()
+      const database = await db.mongo.db("block_b");
+      await database.collection("SURFACE").deleteOne({ _id: id_surface })
+      const face = await database
         .collection("FACE")
-        .insertOne({ id_surface: create.insertedId.toString() });
-      this.createWallNode(createFace.insertedId.toString(), arr[i]);
+        .find({ id_surface: id_surface.toString() }).toArray();
+      for (let faceItem of face) {
+        await database.collection("NODE").deleteMany({ id_face: faceItem._id.toString() })
+        await database.collection("FACE").deleteOne({ _id: faceItem._id })
+      }
+      resolve("Success")
+    } catch (error) {
+      rejects(error)
     }
-
-    resolve("Success");
-  });
-};
-
-module.exports.createWallNode = async function (id_face, locationArr) {
-  try {
-    let arrayCreate = [];
-    for (let i = 0; i < locationArr.length; i++) {
-      arrayCreate.push({
-        id_face,
-        index: i,
-        geometry: locationArr[i],
-      });
-    }
-
-    const database = await db.mongo.db("block_b");
-    const create = await database.collection("NODE").insertMany(arrayCreate);
-  } catch (error) {
-    throw error;
-  }
-};
+  })
+}

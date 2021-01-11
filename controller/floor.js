@@ -5,7 +5,6 @@ module.exports.queryDataFloor = function () {
     try {
       const floor = {
         type: "FeatureCollection",
-        generator: "overpass-ide",
         copyright: "Gi Cung Duoc Group",
         timestamp: new Date(),
         features: [],
@@ -20,27 +19,31 @@ module.exports.queryDataFloor = function () {
         .toArray();
       for (let i = 0; i < _FLOOR_PROP.length; i++) {
         _FLOOR_PROP[i]["_id"].toString();
+        let faceFloor = await database
+          .collection("FACE")
+          .find({ id_body: _FLOOR_PROP[i]._id.toString() }).toArray();
+
         let feature = {
           type: "Feature",
           properties: _FLOOR_PROP[i],
           geometry: {
-            type: "Polygon",
+            type: faceFloor.length > 1 ? "MultiPolygon" : "Polygon",
             coordinates: [],
           },
         };
-        let faceFloor = await database
-          .collection("FACE")
-          .findOne({ id_body: _FLOOR_PROP[i]._id.toString() });
-        // tìm tọa độ
-        let geometries = await (
-          await database
-            .collection("NODE")
-            .find({ id_face: faceFloor._id.toString() })
-            .sort(["index"], 1)
-            .toArray()
-        ).map((item) => item.geometry);
-
-        feature["geometry"]["coordinates"].push(geometries);
+        for (let face of faceFloor) {
+          // tìm tọa độ
+          let geometries = await (
+            await database
+              .collection("NODE")
+              .find({ id_face: face._id.toString() })
+              .sort(["index"], 1)
+              .toArray()
+          ).map((item) => {
+            return [item.x, item.y, item.z]
+          });
+          feature["geometry"]["coordinates"].push(geometries);
+        }
         floor["features"].push(feature);
       }
       resolve(floor);
@@ -50,3 +53,44 @@ module.exports.queryDataFloor = function () {
     }
   });
 };
+
+module.exports.createFloor = function (properties, geometry) {
+  return new Promise(async (resolve, rejects) => {
+    try {
+      await db.mongo.connect();
+      const database = await db.mongo.db("block_b");
+
+      // create body 
+      const body = await database.collection("BODY").insertOne(properties)
+
+      for (let i in geometry) {
+        let face = await database.collection("FACE").insertOne({ id_body: body.insertedId.toString() })
+
+        let geo = geometry[i].map((item, index) => { return { x: item[0], y: item[1], z: item[2], index, id_face: face.insertedId.toString() } })
+        await database.collection("NODE").insertMany(geo)
+      }
+      resolve({ id_body: body.insertedId })
+    } catch (err) {
+      resolve(err)
+    }
+  })
+}
+module.exports.deleteFloor = function (id_body) {
+  return new Promise(async (resolve, rejects) => {
+    try {
+      await db.mongo.connect()
+      const database = await db.mongo.db("block_b");
+      await database.collection("BODY").deleteOne({ _id: ObjectId(id_body) })
+      const face = await database
+        .collection("FACE")
+        .find({ id_body: id_body.toString() }).toArray();
+      for (let faceItem of face) {
+        await database.collection("NODE").deleteMany({ id_face: faceItem._id.toString() })
+        await database.collection("FACE").deleteOne({ _id: faceItem._id })
+      }
+      resolve("Success")
+    } catch (error) {
+      rejects(err)
+    }
+  })
+} 
