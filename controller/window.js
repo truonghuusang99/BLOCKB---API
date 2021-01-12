@@ -30,7 +30,7 @@ module.exports.queryDataWindow = function (type, height = null) {
           type: "Feature",
           properties: _STAIR_PROP[i],
           geometry: {
-            type: faceFloor.length > 1 ? "MultiLineString" : "LineString",
+            type: "MultiLineString",
             coordinates: [],
           },
         };
@@ -226,7 +226,7 @@ module.exports.delete = function () {
     try {
       await db.mongo.connect()
       const database = await db.mongo.db("block_b");
-      const surface = await database.collection("SURFACE").find({ "graphic:type": "window", "graphic:height": 7 }).toArray()
+      const surface = await database.collection("SURFACE").find({ "graphic:type": "window-line"}).toArray()
       for (let i of surface) {
         await database.collection("SURFACE").deleteOne({ _id: i._id })
         const face = await database
